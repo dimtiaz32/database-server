@@ -29,8 +29,16 @@ router.post('/api/treatments', db.addTreatment);
 router.post('/api/staysin', db.addStaysIn);
 
 router.get('/api/wards', db.getAllWards);
+router.get('/api/wardPatients/:id', db.getWardPatients);
+router.get('/api/wardNurses/:id', db.getWardNurses);
+router.post('/api/wards', db.createWard);
 
 router.get('/api/nurses', db.getAllNurses);
+router.post('/api/nurses', db.createNurse);
+router.get('/api/nurseWards/:id', db.getNurseWards);
+router.post('/api/filteredNurses', db.getNursesFiltered);
+router.post('/api/searchNurses', db.searchNurses);
+router.post('/api/worksin', db.addWorksIn);
 
 router.get('/api/specialties', db.getSpecialties);
 

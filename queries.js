@@ -375,9 +375,9 @@ function getAllWards(req, res, next) {
 }
 
 
-
+//Nurse functions
 function getAllNurses(req, res, next) {
-  db.any('SELECT * FROM nurses')
+  db.any('SELECT * FROM nurses ORDER BY lname ASC')
     .then(function(data) {
       res.status(200)
         .json({
@@ -392,7 +392,114 @@ function getAllNurses(req, res, next) {
     });
 }
 
+function createNurse(req, res, next) {
+  db.none("INSERT INTO nurses (fname, lname) VALUES (${fname}, ${lname})", req.body)
+    .then(function() {
+      res.status(200)
+        .json({
+          status: 'success',
+          message: 'created the new nurse'
+        });
+    })
+    .catch(function(err) {
+      console.log(err);
+      return next(err);
+    });
+}
 
+function getNursesFiltered(req, res, next) {
+  var wid = req.body.wid;
+  var queryString;
+
+  if (wid == 0) {
+    queryString = "SELECT * FROM nurses ORDER BY lname ASC";
+  } else {
+    queryString = "SELECT DISTINCT n.fname, n.lname, n.nid FROM nurses n, works_in w WHERE w.wid="+wid+" AND w.nid=n.nid ORDER BY n.lname ASC";
+  }
+
+  db.any(queryString)
+    .then(function(data) {
+      res.status(200)
+        .json({
+          status: 'success',
+          data: data,
+          message: 'Got the filtered nurses'
+        })
+    })
+    .catch(function(err) {
+      console.log(err);
+      return next(err);
+    });
+}
+
+function searchNurses(req, res, next) {
+  var fname = req.body.fnamesearch;
+  var lname = req.body.lnamesearch;
+
+  if (lname === undefined) {
+    lname = "";
+  }
+  if (fname === undefined) {
+    fname = "";
+  }
+
+  var fname = "'%"+fname+"%'";
+  var lname = "'%"+lname+"%'";
+
+  var queryString = "SELECT * FROM nurses n WHERE LOWER(n.fname) LIKE LOWER("+fname+") AND LOWER(n.lname) LIKE LOWER("+lname+") ORDER BY n.lname ASC";
+
+  console.log(queryString);
+  db.any(queryString)
+    .then(function(data) {
+      res.status(200)
+        .json({
+          status: 'success',
+          data: data,
+          message: 'Got the searched nurses'
+        });
+    })
+    .catch(function(err) {
+      console.log(err);
+      return next(err);
+    });
+}
+
+function getNurseWards(req, res, next) {
+  var nid = req.params.id;
+
+  db.any("SELECT w.wid, w.wname FROM works_in wi, wards w WHERE wi.nid=$1 AND wi.wid=w.wid ORDER BY w.wname ASC", nid)
+    .then(function(data) {
+      res.status(200)
+        .json({
+          status: 'success',
+          data: data,
+          message: 'got the wards for the nurse'
+        });
+    })
+    .catch(function(err) {
+      console.log(err);
+      return next(err);
+    });
+}
+
+function addWorksIn(req, res, next) {
+  db.none("INSERT INTO works_in (nid, wid) VALUES (${nid}, ${wid})", req.body)
+    .then(function() {
+      res.status(200)
+        .json({
+          status: 'message',
+          message: 'added nurse to the ward'
+        });
+    })
+    .catch(function(err) {
+      console.log(err);
+      return next(err);
+    });
+}
+
+
+
+//Specialties stuff
 function getSpecialties(req, res, next) {
   db.any("SELECT DISTINCT specialty FROM specialties ORDER BY specialty ASC")
     .then(function(data) {
@@ -434,6 +541,54 @@ function addSpecialty(req, res, next) {
 
 }
 
+
+//Wards
+function getWardPatients(req, res, next) {
+  db.any("SELECT DISTINCT p.fname, p.lname, s.room FROM stays_in s, patients p, treats t WHERE s.wid=$1 AND s.pid=p.pid AND s.outdate IS NULL ORDER BY s.room ASC", req.params.id)
+    .then(function(data) {
+      res.status(200)
+        .json({
+          status: 'success',
+          message: 'created a new nurse'
+        });
+    })
+    .catch(function(err) {
+      console.log(err);
+      return next(err);
+    });
+}
+
+function getWardNurses(req, res, next) {
+  db.any("SELECT n.fname, n.lname FROM works_in w, nurses n WHERE w.wid=$1 AND w.nid=n.nid", req.params.id)
+    .then(function(data) {
+      res.status(200)
+        .json({
+          status: 'success',
+          data: data,
+          message: 'got the nurses for the ward'
+        });
+    })
+    .catch(function(err) {
+      console.log(err);
+      return next(err);
+    });
+}
+
+function createWard(req, res, next) {
+  db.none("INSERT INTO wards (wname) VALUES (${wname})", req.body)
+    .then(function() {
+      res.status(200)
+        .json({
+          status: 'success',
+          message: 'create ward'
+        });
+    })
+    .catch(function(err) {
+      console.log(err);
+      return next(err);
+    });
+}
+
 module.exports = {
   //doctors
   getAllDoctors: getAllDoctors,
@@ -456,8 +611,16 @@ module.exports = {
   addStaysIn: addStaysIn,
   //wards
   getAllWards: getAllWards,
+  getWardPatients: getWardPatients,
+  getWardNurses: getWardNurses,
+  createWard: createWard,
   //nurses
   getAllNurses: getAllNurses,
+  createNurse: createNurse,
+  getNursesFiltered: getNursesFiltered,
+  searchNurses: searchNurses,
+  getNurseWards: getNurseWards,
+  addWorksIn: addWorksIn,
   //specialties
   getSpecialties: getSpecialties,
   addSpecialty: addSpecialty
