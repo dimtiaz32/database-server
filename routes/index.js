@@ -27,6 +27,8 @@ router.get('/api/patientDoctors/:id', db.getPatientDoctors);
 router.get('/api/patientWards/:id', db.getPatientWards);
 router.post('/api/treatments', db.addTreatment);
 router.post('/api/staysin', db.addStaysIn);
+router.put('/api/staysin', db.dischargeStaysIn);
+router.put('/api/patients/:id', db.updatePatient);
 
 router.get('/api/wards', db.getAllWards);
 router.get('/api/wardPatients/:id', db.getWardPatients);

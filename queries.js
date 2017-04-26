@@ -180,6 +180,21 @@ function searchDoctors(req, res, next) {
 
 
 //Queries for patients
+function updatePatient(req, res, next) {
+  db.none('UPDATE patients SET fName=$1, lName=$2, phonenumber=$3, pdetails=$4 WHERE pid=$5', [req.body.fname, req.body.lname, req.body.phonenumber, req.body.pdetails, req.params.id])
+    .then(function() {
+      res.status(200)
+        .json({
+          status: 'success',
+          message: 'Updated patient'
+        });
+    })
+    .catch(function(err) {
+      console.log(err);
+      return next(err);
+    });
+}
+
 function getAllPatients(req, res, next) {
   db.any('SELECT * FROM patients ORDER BY lname ASC')
     .then(function(data) {
@@ -353,7 +368,33 @@ function addStaysIn(req, res, next) {
     })
     .catch(function(error) {
       console.log(error);
-      return next(error);
+
+      res.status(500)
+        .json({
+          message: 'room full'
+        });
+    //  return next(error);
+    });
+}
+
+//function to discharge patient from ward
+function dischargeStaysIn(req, res, next) {
+  var pid = req.body.pid;
+  var wid = req.body.wid;
+  var indate = req.body.indate;
+  var room = req.body.room;
+
+  db.none('UPDATE stays_in SET outdate=current_timestamp WHERE pid=$1 AND wid=$2 AND indate=$3 AND room=$4;', [pid, wid, indate, room])
+    .then(function() {
+      res.status(200)
+        .json({
+          status: 'success',
+          message: 'discharged patient from ward'
+        });
+    })
+    .catch(function(err) {
+      console.log(err);
+      return next(err);
     });
 }
 
@@ -549,6 +590,7 @@ function getWardPatients(req, res, next) {
       res.status(200)
         .json({
           status: 'success',
+          data: data,
           message: 'created a new nurse'
         });
     })
@@ -609,6 +651,8 @@ module.exports = {
   getPatientWards: getPatientWards,
   addTreatment: addTreatment,
   addStaysIn: addStaysIn,
+  updatePatient: updatePatient,
+  dischargeStaysIn: dischargeStaysIn,
   //wards
   getAllWards: getAllWards,
   getWardPatients: getWardPatients,
